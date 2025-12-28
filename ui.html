@@ -1,0 +1,1082 @@
+<!--
+============================================
+VARIABLE MOVER PLUGIN - USER INTERFACE
+============================================
+
+This file creates the visual interface that users see and interact with.
+
+NEW FEATURE: Variable Selection
+Users can now select which variables they want to move using checkboxes.
+A "Select All" checkbox allows quick selection/deselection of all variables.
+
+============================================
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Variable Mover</title>
+  
+  <style>
+    /* ============================================
+       RESET & BASE STYLES
+       ============================================ */
+    
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      font-size: 12px;
+      padding: 16px;
+      background: #ffffff;
+      color: #333333;
+      line-height: 1.5;
+    }
+    
+    /* ============================================
+       HEADINGS
+       ============================================ */
+    
+    h1 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #000000;
+    }
+    
+    h2 {
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #333333;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .subtitle {
+      font-size: 11px;
+      color: #666666;
+      margin-bottom: 20px;
+    }
+    
+    /* ============================================
+       SECTIONS
+       ============================================ */
+    
+    .section {
+      margin-bottom: 24px;
+    }
+    
+    /* ============================================
+       LABELS
+       ============================================ */
+    
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #333333;
+    }
+    
+    /* ============================================
+       SELECT DROPDOWNS
+       ============================================ */
+    
+    select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 12px;
+      background-color: #ffffff;
+      color: #333333;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M6 8L2 4h8z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+    
+    select:focus {
+      outline: none;
+      border-color: #0d99ff;
+    }
+    
+    select:disabled {
+      background-color: #f5f5f5;
+      color: #999999;
+      cursor: not-allowed;
+    }
+    
+    /* ============================================
+       PREVIEW BOX HEADER
+       ============================================
+       
+       Contains the "Select All" checkbox and the counter.
+       Uses flexbox to space them apart.
+    */
+    
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    
+    .preview-header h2 {
+      margin-bottom: 0;
+    }
+    
+    /* ============================================
+       SELECT ALL CHECKBOX
+       ============================================
+       
+       A styled checkbox with label that toggles all variables.
+       
+       We use a custom checkbox design that's larger and
+       more visible than the default browser checkbox.
+    */
+    
+    .select-all-container {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      user-select: none;          /* Prevent text selection when clicking */
+    }
+    
+    .select-all-container:hover {
+      opacity: 0.8;
+    }
+    
+    .select-all-label {
+      font-size: 11px;
+      color: #666666;
+      font-weight: 500;
+    }
+    
+    /* ============================================
+       CUSTOM CHECKBOX STYLING
+       ============================================
+       
+       We hide the default checkbox and create our own
+       using CSS. This gives us full control over the
+       appearance.
+       
+       The checkbox has three states:
+       - Unchecked: Empty box with border
+       - Checked: Blue box with white checkmark
+       - Indeterminate: Blue box with horizontal line
+         (shown when some but not all items are selected)
+    */
+    
+    .custom-checkbox {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #cccccc;
+      border-radius: 3px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #ffffff;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+    
+    /* Checked state */
+    .custom-checkbox.checked {
+      background-color: #0d99ff;
+      border-color: #0d99ff;
+    }
+    
+    /* Indeterminate state (some selected) */
+    .custom-checkbox.indeterminate {
+      background-color: #0d99ff;
+      border-color: #0d99ff;
+    }
+    
+    /* Checkmark icon (shown when checked) */
+    .custom-checkbox .checkmark {
+      display: none;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: bold;
+      line-height: 1;
+    }
+    
+    .custom-checkbox.checked .checkmark {
+      display: block;
+    }
+    
+    /* Indeterminate line (shown when partially selected) */
+    .custom-checkbox .indeterminate-line {
+      display: none;
+      width: 8px;
+      height: 2px;
+      background-color: #ffffff;
+      border-radius: 1px;
+    }
+    
+    .custom-checkbox.indeterminate .indeterminate-line {
+      display: block;
+    }
+    
+    /* Disabled checkbox (for duplicates) */
+    .custom-checkbox.disabled {
+      background-color: #eeeeee;
+      border-color: #dddddd;
+      cursor: not-allowed;
+    }
+    
+    /* ============================================
+       PREVIEW BOX
+       ============================================ */
+    
+    .preview-box {
+      background-color: #f8f9fa;
+      border: 1px solid #e0e0e0;
+      border-radius: 6px;
+      padding: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    
+    .preview-empty {
+      color: #999999;
+      font-style: italic;
+      text-align: center;
+      padding: 20px 0;
+    }
+    
+    /* ============================================
+       VARIABLE LIST ITEMS
+       ============================================ */
+    
+    .variable-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid #eeeeee;
+      cursor: pointer;               /* Clickable row */
+      transition: background-color 0.1s ease;
+    }
+    
+    .variable-item:last-child {
+      border-bottom: none;
+    }
+    
+    /* Hover effect for clickable rows */
+    .variable-item:hover:not(.duplicate) {
+      background-color: #f0f0f0;
+      margin: 0 -12px;
+      padding: 6px 12px;
+    }
+    
+    /* ============================================
+       VARIABLE TYPE BADGE
+       ============================================ */
+    
+    .variable-type {
+      font-size: 9px;
+      font-weight: 600;
+      padding: 2px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      width: 60px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+    
+    .variable-type.color {
+      background-color: #e8f4fd;
+      color: #0066cc;
+    }
+    
+    .variable-type.number {
+      background-color: #e8fdf4;
+      color: #00994d;
+    }
+    
+    .variable-type.string {
+      background-color: #fdf4e8;
+      color: #cc6600;
+    }
+    
+    .variable-type.boolean {
+      background-color: #f4e8fd;
+      color: #6600cc;
+    }
+    
+    .variable-name {
+      font-size: 12px;
+      color: #333333;
+      flex-grow: 1;
+    }
+    
+    /* ============================================
+       DUPLICATE INDICATOR
+       ============================================
+       
+       Duplicates are faded, have strikethrough text,
+       and their checkboxes are disabled.
+    */
+    
+    .variable-item.duplicate {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .variable-item.duplicate:hover {
+      background-color: transparent;
+      margin: 0;
+      padding: 6px 0;
+    }
+    
+    .variable-item.duplicate .variable-name {
+      text-decoration: line-through;
+      color: #999999;
+    }
+    
+    .skip-badge {
+      font-size: 8px;
+      font-weight: 600;
+      padding: 2px 5px;
+      border-radius: 3px;
+      background-color: #ff9933;
+      color: #ffffff;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      flex-shrink: 0;
+    }
+    
+    /* ============================================
+       COUNTER BADGE
+       ============================================ */
+    
+    .counter {
+      display: inline-block;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+      background-color: #0d99ff;
+      color: #ffffff;
+    }
+    
+    /* ============================================
+       BUTTONS
+       ============================================ */
+    
+    button {
+      width: 100%;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .btn-primary {
+      background-color: #0d99ff;
+      color: #ffffff;
+    }
+    
+    .btn-primary:hover {
+      background-color: #0077cc;
+    }
+    
+    .btn-primary:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    /* ============================================
+       LOADING SPINNER
+       ============================================ */
+    
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+    
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
+    .btn-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    /* ============================================
+       STATUS MESSAGE
+       ============================================ */
+    
+    .status-message {
+      padding: 12px;
+      border-radius: 6px;
+      margin-top: 16px;
+      font-size: 11px;
+      display: none;
+    }
+    
+    .status-message.success {
+      background-color: #e8fdf4;
+      color: #00663d;
+      border: 1px solid #00cc7a;
+      display: block;
+    }
+    
+    .status-message.error {
+      background-color: #fde8e8;
+      color: #cc0000;
+      border: 1px solid #ff6666;
+      display: block;
+    }
+    
+    /* ============================================
+       ARROW INDICATOR
+       ============================================ */
+    
+    .arrow-indicator {
+      text-align: center;
+      padding: 8px 0;
+      color: #999999;
+      font-size: 18px;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- HEADER -->
+  <h1>Variable Mover</h1>
+  <p class="subtitle">Move variables from one collection to another</p>
+  
+  <!-- SECTION 1: SOURCE COLLECTION -->
+  <div class="section">
+    <h2>Step 1: Select Source</h2>
+    <label for="source-collection">Move variables FROM this collection:</label>
+    <select id="source-collection">
+      <option value="">-- Loading collections... --</option>
+    </select>
+  </div>
+  
+  <!-- SECTION 2: PREVIEW WITH SELECTION -->
+  <div class="section">
+    <!--
+    PREVIEW HEADER
+    Contains the title with counter and the "Select All" checkbox.
+    The Select All checkbox has three visual states:
+      - Checked: All variables are selected
+      - Unchecked: No variables are selected
+      - Indeterminate: Some variables are selected
+    -->
+    <div class="preview-header">
+      <h2>Variables to Move <span id="variable-counter" class="counter" style="display: none;">0</span></h2>
+      
+      <!-- Select All checkbox (hidden until variables are loaded) -->
+      <div id="select-all-container" class="select-all-container" style="display: none;">
+        <div id="select-all-checkbox" class="custom-checkbox">
+          <span class="checkmark">✓</span>
+          <span class="indeterminate-line"></span>
+        </div>
+        <span class="select-all-label">Select All</span>
+      </div>
+    </div>
+    
+    <div id="preview-box" class="preview-box">
+      <div class="preview-empty">Select a source collection to see variables</div>
+    </div>
+  </div>
+  
+  <!-- ARROW INDICATOR -->
+  <div class="arrow-indicator">↓</div>
+  
+  <!-- SECTION 3: DESTINATION COLLECTION -->
+  <div class="section">
+    <h2>Step 2: Select Destination</h2>
+    <label for="destination-collection">Move variables TO this collection:</label>
+    <select id="destination-collection" disabled>
+      <option value="">-- Select source first --</option>
+    </select>
+  </div>
+  
+  <!-- SECTION 4: ACTION BUTTON -->
+  <div class="section">
+    <button id="move-button" class="btn-primary" disabled>
+      <span class="btn-content">
+        <span class="btn-text">Move Variables</span>
+      </span>
+    </button>
+  </div>
+  
+  <!-- STATUS MESSAGE -->
+  <div id="status-message" class="status-message"></div>
+  
+  
+  <script>
+    // ============================================
+    // GLOBAL VARIABLES
+    // ============================================
+    
+    let allCollections = [];
+    let allSourceVariables = [];      // All variables from source collection
+    let selectedSourceId = null;
+    let selectedDestinationId = null;
+    let isLoading = false;
+    
+    // Selection tracking
+    // We use a Set to store the IDs of selected variables.
+    // A Set is perfect for this because:
+    //   - Fast add/remove/check operations
+    //   - Automatically handles duplicates
+    //   - Easy to get the count with .size
+    let selectedVariableIds = new Set();
+    
+    // Duplicate tracking
+    // Variables that exist in both source and destination
+    let duplicateNames = new Set();
+    
+    
+    // ============================================
+    // DOM ELEMENT REFERENCES
+    // ============================================
+    
+    const sourceSelect = document.getElementById('source-collection');
+    const destinationSelect = document.getElementById('destination-collection');
+    const previewBox = document.getElementById('preview-box');
+    const variableCounter = document.getElementById('variable-counter');
+    const moveButton = document.getElementById('move-button');
+    const statusMessage = document.getElementById('status-message');
+    const selectAllContainer = document.getElementById('select-all-container');
+    const selectAllCheckbox = document.getElementById('select-all-checkbox');
+    
+    
+    // ============================================
+    // LOADING STATE FUNCTIONS
+    // ============================================
+    
+    function showLoading() {
+      isLoading = true;
+      moveButton.disabled = true;
+      moveButton.querySelector('.btn-content').innerHTML = `
+        <span class="spinner"></span>
+        <span class="btn-text">Moving...</span>
+      `;
+      sourceSelect.disabled = true;
+      destinationSelect.disabled = true;
+      statusMessage.className = 'status-message';
+    }
+    
+    function hideLoading() {
+      isLoading = false;
+      moveButton.disabled = false;
+      moveButton.querySelector('.btn-content').innerHTML = `
+        <span class="btn-text">Move Variables</span>
+      `;
+      sourceSelect.disabled = false;
+      destinationSelect.disabled = false;
+    }
+    
+    
+    // ============================================
+    // INITIALIZATION
+    // ============================================
+    
+    parent.postMessage({
+      pluginMessage: { type: 'get-collections' }
+    }, '*');
+    
+    
+    // ============================================
+    // MESSAGE LISTENER
+    // ============================================
+    
+    window.onmessage = function(event) {
+      const msg = event.data.pluginMessage;
+      if (!msg) return;
+      
+      // Handle: Collections List
+      if (msg.type === 'collections-list') {
+        allCollections = msg.collections;
+        populateSourceDropdown(allCollections);
+      }
+      
+      // Handle: Variables Preview
+      if (msg.type === 'variables-preview') {
+        allSourceVariables = msg.variables;
+        duplicateNames.clear();
+        
+        // By default, select ALL variables
+        selectedVariableIds.clear();
+        for (const variable of allSourceVariables) {
+          selectedVariableIds.add(variable.id);
+        }
+        
+        renderVariablesList();
+        updateSelectAllState();
+        
+        // Show the Select All container
+        selectAllContainer.style.display = allSourceVariables.length > 0 ? 'flex' : 'none';
+      }
+      
+      // Handle: Duplicates Check Result
+      if (msg.type === 'duplicates-check-result') {
+        // Store duplicate names
+        duplicateNames = new Set(msg.duplicates.map(v => v.name));
+        
+        // IMPORTANT: Remove duplicates from selection
+        // Users cannot select variables that already exist in destination
+        for (const dup of msg.duplicates) {
+          selectedVariableIds.delete(dup.id);
+        }
+        
+        renderVariablesList();
+        updateSelectAllState();
+        updateMoveButtonState();
+      }
+      
+      // Handle: Move Complete
+      if (msg.type === 'move-complete') {
+        hideLoading();
+        
+        let successText = '✓ Moved ' + msg.successCount + ' variable(s) to "' + msg.destinationName + '"';
+        if (msg.skippedCount > 0) {
+          successText += ' (' + msg.skippedCount + ' skipped)';
+        }
+        
+        showStatusMessage('success', successText);
+        
+        parent.postMessage({
+          pluginMessage: { type: 'get-collections' }
+        }, '*');
+        
+        resetUI();
+      }
+      
+      // Handle: Move Error
+      if (msg.type === 'move-error') {
+        hideLoading();
+        showStatusMessage('error', '✗ ' + msg.message);
+      }
+    };
+    
+    
+    // ============================================
+    // FUNCTION: Render Variables List
+    // ============================================
+    //
+    // Renders the source variables list with checkboxes.
+    // Each row is clickable to toggle selection.
+    // Duplicate variables are shown faded with disabled checkboxes.
+    
+    function renderVariablesList() {
+      
+      const count = allSourceVariables.length;
+      
+      if (count === 0) {
+        previewBox.innerHTML = '<div class="preview-empty">This collection has no variables</div>';
+        variableCounter.style.display = 'none';
+        return;
+      }
+      
+      // Count how many are actually selected (excluding duplicates)
+      const selectedCount = selectedVariableIds.size;
+      variableCounter.textContent = selectedCount;
+      variableCounter.style.display = 'inline-block';
+      
+      // Build the HTML for the variable list
+      let html = '';
+      
+      for (const variable of allSourceVariables) {
+        
+        const typeClass = variable.type.toLowerCase();
+        const isDuplicate = duplicateNames.has(variable.name);
+        const isSelected = selectedVariableIds.has(variable.id);
+        
+        // Determine item classes
+        const itemClass = isDuplicate ? 'variable-item duplicate' : 'variable-item';
+        
+        // Determine checkbox state
+        let checkboxClass = 'custom-checkbox';
+        if (isDuplicate) {
+          checkboxClass += ' disabled';
+        } else if (isSelected) {
+          checkboxClass += ' checked';
+        }
+        
+        // Build the row HTML
+        // We use data-id attribute to store the variable ID for click handling
+        html += '<div class="' + itemClass + '" data-id="' + variable.id + '">';
+        
+        // Checkbox
+        html += '  <div class="' + checkboxClass + '">';
+        html += '    <span class="checkmark">✓</span>';
+        html += '    <span class="indeterminate-line"></span>';
+        html += '  </div>';
+        
+        // Type badge
+        html += '  <span class="variable-type ' + typeClass + '">' + variable.type + '</span>';
+        
+        // Variable name
+        html += '  <span class="variable-name">' + variable.name + '</span>';
+        
+        // Skip badge for duplicates
+        if (isDuplicate) {
+          html += '  <span class="skip-badge">Skip</span>';
+        }
+        
+        html += '</div>';
+      }
+      
+      previewBox.innerHTML = html;
+      
+      // Add click handlers to each row
+      // We do this after inserting HTML because the elements need to exist first
+      const rows = previewBox.querySelectorAll('.variable-item:not(.duplicate)');
+      rows.forEach(function(row) {
+        row.addEventListener('click', function() {
+          toggleVariableSelection(this.dataset.id);
+        });
+      });
+    }
+    
+    
+    // ============================================
+    // FUNCTION: Toggle Variable Selection
+    // ============================================
+    //
+    // Toggles a single variable's selection state.
+    // Called when user clicks on a row.
+    //
+    // Parameters:
+    //   variableId - The ID of the variable to toggle
+    
+    function toggleVariableSelection(variableId) {
+      
+      if (selectedVariableIds.has(variableId)) {
+        // Currently selected → deselect
+        selectedVariableIds.delete(variableId);
+      } else {
+        // Currently not selected → select
+        selectedVariableIds.add(variableId);
+      }
+      
+      // Re-render to update visual state
+      renderVariablesList();
+      updateSelectAllState();
+      updateMoveButtonState();
+    }
+    
+    
+    // ============================================
+    // FUNCTION: Update Select All State
+    // ============================================
+    //
+    // Updates the "Select All" checkbox appearance based on
+    // how many variables are currently selected.
+    //
+    // Three states:
+    //   - Checked: ALL selectable variables are selected
+    //   - Unchecked: NO variables are selected
+    //   - Indeterminate: SOME variables are selected
+    
+    function updateSelectAllState() {
+      
+      // Count how many variables CAN be selected (non-duplicates)
+      const selectableVariables = allSourceVariables.filter(function(v) {
+        return !duplicateNames.has(v.name);
+      });
+      
+      const selectableCount = selectableVariables.length;
+      const selectedCount = selectedVariableIds.size;
+      
+      // Remove all state classes first
+      selectAllCheckbox.classList.remove('checked', 'indeterminate');
+      
+      if (selectableCount === 0) {
+        // No selectable variables (all are duplicates)
+        // Leave unchecked
+      } else if (selectedCount === 0) {
+        // None selected → unchecked (no class needed)
+      } else if (selectedCount === selectableCount) {
+        // All selected → checked
+        selectAllCheckbox.classList.add('checked');
+      } else {
+        // Some selected → indeterminate
+        selectAllCheckbox.classList.add('indeterminate');
+      }
+    }
+    
+    
+    // ============================================
+    // FUNCTION: Toggle Select All
+    // ============================================
+    //
+    // Toggles selection of all variables.
+    // If all are selected → deselect all
+    // If some or none are selected → select all
+    
+    function toggleSelectAll() {
+      
+      // Get list of selectable variables (non-duplicates)
+      const selectableVariables = allSourceVariables.filter(function(v) {
+        return !duplicateNames.has(v.name);
+      });
+      
+      const selectableCount = selectableVariables.length;
+      const selectedCount = selectedVariableIds.size;
+      
+      if (selectedCount === selectableCount) {
+        // All are selected → deselect all
+        selectedVariableIds.clear();
+      } else {
+        // Some or none selected → select all
+        selectedVariableIds.clear();
+        for (const variable of selectableVariables) {
+          selectedVariableIds.add(variable.id);
+        }
+      }
+      
+      renderVariablesList();
+      updateSelectAllState();
+      updateMoveButtonState();
+    }
+    
+    
+    // ============================================
+    // EVENT: Select All Click
+    // ============================================
+    
+    selectAllContainer.addEventListener('click', toggleSelectAll);
+    
+    
+    // ============================================
+    // FUNCTION: Populate Source Dropdown
+    // ============================================
+    
+    function populateSourceDropdown(collections) {
+      sourceSelect.innerHTML = '';
+      
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = '-- Select a collection --';
+      sourceSelect.appendChild(defaultOption);
+      
+      for (const collection of collections) {
+        const option = document.createElement('option');
+        option.value = collection.id;
+        option.textContent = collection.name + ' (' + collection.variableCount + ' variables)';
+        sourceSelect.appendChild(option);
+      }
+    }
+    
+    
+    // ============================================
+    // FUNCTION: Populate Destination Dropdown
+    // ============================================
+    
+    function populateDestinationDropdown(collections, excludeId) {
+      destinationSelect.innerHTML = '';
+      
+      const defaultOption = document.createElement('option');
+      defaultOption.value = '';
+      defaultOption.textContent = '-- Select destination --';
+      destinationSelect.appendChild(defaultOption);
+      
+      for (const collection of collections) {
+        if (collection.id === excludeId) continue;
+        
+        const option = document.createElement('option');
+        option.value = collection.id;
+        option.textContent = collection.name + ' (' + collection.variableCount + ' variables)';
+        destinationSelect.appendChild(option);
+      }
+      
+      destinationSelect.disabled = false;
+    }
+    
+    
+    // ============================================
+    // FUNCTION: Show Status Message
+    // ============================================
+    
+    function showStatusMessage(type, message) {
+      statusMessage.className = 'status-message';
+      statusMessage.classList.add(type);
+      statusMessage.textContent = message;
+    }
+    
+    
+    // ============================================
+    // FUNCTION: Reset UI
+    // ============================================
+    
+    function resetUI() {
+      sourceSelect.value = '';
+      destinationSelect.value = '';
+      destinationSelect.disabled = true;
+      destinationSelect.innerHTML = '<option value="">-- Select source first --</option>';
+      
+      previewBox.innerHTML = '<div class="preview-empty">Select a source collection to see variables</div>';
+      variableCounter.style.display = 'none';
+      selectAllContainer.style.display = 'none';
+      
+      moveButton.disabled = true;
+      
+      selectedSourceId = null;
+      selectedDestinationId = null;
+      allSourceVariables = [];
+      selectedVariableIds.clear();
+      duplicateNames.clear();
+    }
+    
+    
+    // ============================================
+    // FUNCTION: Update Move Button State
+    // ============================================
+    //
+    // The Move button is enabled only when:
+    //   1. Both source and destination are selected
+    //   2. At least one variable is selected
+    
+    function updateMoveButtonState() {
+      if (isLoading) return;
+      
+      const canMove = selectedSourceId && 
+                      selectedDestinationId && 
+                      selectedVariableIds.size > 0;
+      
+      moveButton.disabled = !canMove;
+    }
+    
+    
+    // ============================================
+    // EVENT: Source Selection Changed
+    // ============================================
+    
+    sourceSelect.onchange = function() {
+      selectedSourceId = this.value;
+      statusMessage.className = 'status-message';
+      
+      // Clear all tracking
+      duplicateNames.clear();
+      allSourceVariables = [];
+      selectedVariableIds.clear();
+      
+      if (!selectedSourceId) {
+        previewBox.innerHTML = '<div class="preview-empty">Select a source collection to see variables</div>';
+        variableCounter.style.display = 'none';
+        selectAllContainer.style.display = 'none';
+        destinationSelect.disabled = true;
+        destinationSelect.innerHTML = '<option value="">-- Select source first --</option>';
+        selectedDestinationId = null;
+        updateMoveButtonState();
+        return;
+      }
+      
+      // Request variables preview
+      parent.postMessage({
+        pluginMessage: {
+          type: 'get-variables-preview',
+          collectionId: selectedSourceId
+        }
+      }, '*');
+      
+      populateDestinationDropdown(allCollections, selectedSourceId);
+      
+      selectedDestinationId = null;
+      updateMoveButtonState();
+    };
+    
+    
+    // ============================================
+    // EVENT: Destination Selection Changed
+    // ============================================
+    
+    destinationSelect.onchange = function() {
+      selectedDestinationId = this.value;
+      statusMessage.className = 'status-message';
+      
+      if (!selectedDestinationId) {
+        // Clear duplicate indicators
+        duplicateNames.clear();
+        
+        // Re-select all variables since there's no destination conflict
+        selectedVariableIds.clear();
+        for (const variable of allSourceVariables) {
+          selectedVariableIds.add(variable.id);
+        }
+        
+        renderVariablesList();
+        updateSelectAllState();
+        updateMoveButtonState();
+        return;
+      }
+      
+      // Check for duplicates
+      parent.postMessage({
+        pluginMessage: {
+          type: 'check-duplicates',
+          sourceCollectionId: selectedSourceId,
+          destinationCollectionId: selectedDestinationId
+        }
+      }, '*');
+    };
+    
+    
+    // ============================================
+    // EVENT: Move Button Click
+    // ============================================
+    
+    moveButton.addEventListener('click', function() {
+      if (isLoading) return;
+      
+      if (!selectedSourceId || !selectedDestinationId) {
+        showStatusMessage('error', 'Please select both source and destination collections.');
+        return;
+      }
+      
+      if (selectedVariableIds.size === 0) {
+        showStatusMessage('error', 'Please select at least one variable to move.');
+        return;
+      }
+      
+      showLoading();
+      
+      // Send the selected variable IDs to the plugin
+      parent.postMessage({
+        pluginMessage: {
+          type: 'move-variables',
+          sourceCollectionId: selectedSourceId,
+          destinationCollectionId: selectedDestinationId,
+          selectedVariableIds: Array.from(selectedVariableIds)  // Convert Set to Array
+        }
+      }, '*');
+    });
+  </script>
+</body>
+</html>

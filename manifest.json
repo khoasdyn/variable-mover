@@ -1,0 +1,10 @@
+{
+  "name": "Variable Mover",
+  "id": "1586749605443760881",
+  "networkAccess": { "allowedDomains": ["none"] },
+  "documentAccess": "dynamic-page",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "ui": "ui.html"
+}
